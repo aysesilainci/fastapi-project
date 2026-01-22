@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CiteGraph - Akademik Atıf Analiz Sistemi</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+    <div class="background-animation"></div>
+    <div class="container">
+        <header>
+            <div class="header-content">
+                <div class="logo">
+                    <div class="logo-icon">📚</div>
+                    <div>
+                        <h1>CiteGraph</h1>
+                        <p class="subtitle">Akademik Atıf Analiz Sistemi</p>
+                    </div>
+                </div>
+                <div class="header-badge">
+                    <span class="badge-pulse"></span>
+                    <span>API Aktif</span>
+                </div>
+            </div>
+        </header>
+
+        <nav class="tabs">
+            <button class="tab-btn active" onclick="showTab('generate', this)">Veri Oluştur</button>
+            <button class="tab-btn" onclick="showTab('top-papers', this)">En Çok Atıf Alan Makaleler</button>
+            <button class="tab-btn" onclick="showTab('stats', this)">İstatistikler</button>
+        </nav>
+
+        <!-- Generate Data Tab -->
+        <div id="generate-tab" class="tab-content active">
+            <div class="card card-animated">
+                <div class="card-header">
+                    <div class="card-icon">📊</div>
+                    <div>
+                        <h2>Sentetik Veri Oluştur</h2>
+                        <p class="card-description">1 milyon+ akademik atıf kaydı oluşturun. Bu işlem 5-10 dakika sürebilir.</p>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <button id="generate-btn" class="btn btn-primary btn-large" onclick="generateData()">
+                        <span class="btn-icon">🚀</span>
+                        <span>Veri Oluştur</span>
+                    </button>
+                    <div id="generate-status" class="status"></div>
+                    <div id="generate-progress" class="progress-container" style="display: none;">
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="progress-fill"></div>
+                        </div>
+                        <div class="progress-text" id="progress-text">0%</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Top Papers Tab -->
+        <div id="top-papers-tab" class="tab-content">
+            <div class="card card-animated">
+                <div class="card-header">
+                    <div class="card-icon">🏆</div>
+                    <div>
+                        <h2>En Çok Atıf Alan Makaleler</h2>
+                        <p class="card-description">Konu bazında en çok atıf alan akademik makaleleri keşfedin</p>
+                    </div>
+                </div>
+                <div class="card-body">
+                <div class="form-group">
+                    <label for="topic-select">Konu:</label>
+                    <select id="topic-select" class="input" style="cursor: pointer;">
+                        <option value="AI" selected>AI</option>
+                        <option value="Machine Learning">Machine Learning</option>
+                        <option value="Deep Learning">Deep Learning</option>
+                        <option value="NLP">NLP</option>
+                        <option value="Computer Vision">Computer Vision</option>
+                        <option value="Robotics">Robotics</option>
+                        <option value="Data Science">Data Science</option>
+                        <option value="Statistics">Statistics</option>
+                        <option value="Mathematics">Mathematics</option>
+                        <option value="Physics">Physics</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="limit-input">Limit:</label>
+                    <input type="number" id="limit-input" class="input" value="50" min="1" max="100">
+                </div>
+                <div class="button-group">
+                    <button class="btn btn-warning" onclick="getTopPapersFromDB()">
+                        🔄 Sorgula (Veritabanından - Cache Yok)
+                    </button>
+                    <button class="btn btn-primary" onclick="getTopPapers()">
+                        ⚡ Sorgula (Cache'den - Hızlı)
+                    </button>
+                </div>
+                <div class="info-box">
+                    <p><strong>💡 Açıklama:</strong></p>
+                    <ul>
+                        <li><strong>Veritabanından:</strong> Cache'i atlayıp direkt PostgreSQL'den sorgular (yavaş, ~500-2000ms)</li>
+                        <li><strong>Cache'den:</strong> Redis cache'den sorgular (hızlı, ~10-50ms) - İlk sorgudan sonra 60 saniye geçerli</li>
+                    </ul>
+                </div>
+                <div id="cache-indicator" class="cache-indicator"></div>
+                <div id="top-papers-result" class="results"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stats Tab -->
+        <div id="stats-tab" class="tab-content">
+            <div class="card card-animated">
+                <div class="card-header">
+                    <div class="card-icon">📈</div>
+                    <div>
+                        <h2>İstatistikler ve Analiz</h2>
+                        <p class="card-description">Sistem genelinde detaylı istatistikler ve görselleştirmeler</p>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <button class="btn btn-secondary" onclick="loadStats()">
+                        <span class="btn-icon">🔄</span>
+                        <span>İstatistikleri Yenile</span>
+                    </button>
+                    <div id="stats-result" class="results"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <div class="footer-content">
+            <p>© 2024 CiteGraph - Akademik Atıf Analiz Sistemi</p>
+            <div class="footer-links">
+                <a href="/docs" target="_blank">📖 API Dokümantasyonu</a>
+                <a href="/api/v1/health" target="_blank">💚 Health Check</a>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Toast Notification Container -->
+    <div id="toast-container" class="toast-container"></div>
+
+    <script src="/static/script.js"></script>
+</body>
+</html>
+
