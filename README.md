@@ -272,7 +272,7 @@ Sorularınız için API dokümantasyonunu ziyaret edin: `/docs`
 
 ---
 
-**Geliştirici**: [İsminiz]  
+**Geliştirici**: [Ayşe Sıla İnci]  
 **Tarih**: 2024  
 **Versiyon**: 1.0.0
 
