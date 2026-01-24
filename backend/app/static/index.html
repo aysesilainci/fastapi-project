@@ -12,126 +12,441 @@
 </head>
 <body>
     <div class="background-animation"></div>
-    <div class="container">
-        <header>
-            <div class="header-content">
-                <div class="logo">
-                    <div class="logo-icon">📚</div>
-                    <div>
-                        <h1>CiteGraph</h1>
-                        <p class="subtitle">Akademik Atıf Analiz Sistemi</p>
-                    </div>
-                </div>
-                <div class="header-badge">
-                    <span class="badge-pulse"></span>
-                    <span>API Aktif</span>
-                </div>
+    
+    <!-- Navigation -->
+    <nav class="main-nav">
+        <div class="nav-container">
+            <div class="nav-logo">
+                <span class="logo-icon">📚</span>
+                <span class="logo-text">CiteGraph</span>
             </div>
-        </header>
+            <div class="nav-links">
+                <a href="#home" onclick="showSection('home')" class="nav-link active">Ana Sayfa</a>
+                <a href="#dashboard" onclick="showSection('dashboard')" class="nav-link">Dashboard</a>
+                <a href="/docs" target="_blank" class="nav-link">API Docs</a>
+            </div>
+            <div class="nav-status">
+                <span class="status-dot"></span>
+                <span>Sistem Aktif</span>
+            </div>
+        </div>
+    </nav>
 
-        <nav class="tabs">
-            <button class="tab-btn active" onclick="showTab('generate', this)">Veri Oluştur</button>
-            <button class="tab-btn" onclick="showTab('top-papers', this)">En Çok Atıf Alan Makaleler</button>
-            <button class="tab-btn" onclick="showTab('stats', this)">İstatistikler</button>
-        </nav>
-
-        <!-- Generate Data Tab -->
-        <div id="generate-tab" class="tab-content active">
-            <div class="card card-animated">
-                <div class="card-header">
-                    <div class="card-icon">📊</div>
-                    <div>
-                        <h2>Sentetik Veri Oluştur</h2>
-                        <p class="card-description">1 milyon+ akademik atıf kaydı oluşturun. Bu işlem 5-10 dakika sürebilir.</p>
+    <!-- Home Section (Landing Page) -->
+    <section id="home-section" class="section active">
+        <!-- Home Introduction Section -->
+        <div class="home-intro-section">
+            <div class="home-intro-content">
+                <h1 class="home-intro-title">CiteGraph</h1>
+                <p class="home-intro-tagline">Atıflar aracılığıyla bilgiyi haritalıyor.</p>
+                <div class="home-intro-description">
+                    <p>
+                        CiteGraph, akademik makalelerin atıf ilişkilerini analiz edip, en etkili araştırmaları keşfetmenize yardımcı olur. 
+                        Milyonlarca atıf kaydını hızlı bir şekilde işler ve en çok atıf alan, trend olan makaleleri gösterir. 
+                        Redis cache teknolojisi sayesinde sorgular saniyeler içinde yanıt verir 
+                    </p>
+                </div>
+                <div class="home-features-list">
+                    <div class="home-feature-item">
+                        <div class="home-feature-icon">🐍</div>
+                        <div class="home-feature-name">FastAPI Backend</div>
+                        <div class="home-feature-desc">Modern Python API</div>
+                    </div>
+                    <div class="home-feature-item">
+                        <div class="home-feature-icon">🐘</div>
+                        <div class="home-feature-name">PostgreSQL</div>
+                        <div class="home-feature-desc">Güvenilir Veri Tabanı</div>
+                    </div>
+                    <div class="home-feature-item">
+                        <div class="home-feature-icon">⚡</div>
+                        <div class="home-feature-name">Redis Cache</div>
+                        <div class="home-feature-desc">10x Performans Artışı</div>
+                    </div>
+                    <div class="home-feature-item">
+                        <div class="home-feature-icon">🐳</div>
+                        <div class="home-feature-name">Docker</div>
+                        <div class="home-feature-desc">Containerized Yapı</div>
+                    </div>
+                    <div class="home-feature-item">
+                        <div class="home-feature-icon">📊</div>
+                        <div class="home-feature-name">Ölçeklenebilir</div>
+                        <div class="home-feature-desc">1M+ Sentetik Veri</div>
+                    </div>
+                    <div class="home-feature-item">
+                        <div class="home-feature-icon">🔗</div>
+                        <div class="home-feature-name">Grafik Analiz</div>
+                        <div class="home-feature-desc">Ağ Görselleştirmesi</div>
                     </div>
                 </div>
-                <div class="card-body">
-                    <button id="generate-btn" class="btn btn-primary btn-large" onclick="generateData()">
-                        <span class="btn-icon">🚀</span>
-                        <span>Veri Oluştur</span>
-                    </button>
-                    <div id="generate-status" class="status"></div>
-                    <div id="generate-progress" class="progress-container" style="display: none;">
-                        <div class="progress-bar">
-                            <div class="progress-fill" id="progress-fill"></div>
+                
+                <!-- Key Benefits Section -->
+                <div style="margin-top: 80px; padding-top: 80px; border-top: 1px solid rgba(102, 126, 234, 0.2);">
+                    <h2 style="font-size: 2.2em; font-weight: 700; color: var(--text-primary); margin-bottom: 40px;">
+                        Neden CiteGraph?
+                    </h2>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 30px;">
+                        <div style="padding: 30px; background: rgba(16, 185, 129, 0.1); border-left: 4px solid #10b981; border-radius: 8px;">
+                            <div style="font-size: 1.8em; margin-bottom: 10px;">⚡</div>
+                            <h3 style="color: #e2e8f0; font-weight: 700; margin-bottom: 10px;">Yüksek Performans</h3>
+                            <p style="color: #cbd5e1;">Redis cache ile sorguları 10x hızlandırın. MISS durumunda PostgreSQL'den alınan veriler 60 saniye boyunca önbelleğe alınır.</p>
                         </div>
-                        <div class="progress-text" id="progress-text">0%</div>
+                        <div style="padding: 30px; background: rgba(59, 130, 246, 0.1); border-left: 4px solid #3b82f6; border-radius: 8px;">
+                            <div style="font-size: 1.8em; margin-bottom: 10px;">📊</div>
+                            <h3 style="color: #e2e8f0; font-weight: 700; margin-bottom: 10px;">Gerçekçi Veri</h3>
+                            <p style="color: #cbd5e1;">1 milyon+ sentetik atıf kaydı. Batch insert teknolojisi ile saniyeler içinde üretilir. Büyüme oranları ve trend analizi dahil.</p>
+                        </div>
+                        <div style="padding: 30px; background: rgba(168, 85, 247, 0.1); border-left: 4px solid #a855f7; border-radius: 8px;">
+                            <div style="font-size: 1.8em; margin-bottom: 10px;">🚀</div>
+                            <h3 style="color: #e2e8f0; font-weight: 700; margin-bottom: 10px;">Kolay Dağıtım</h3>
+                            <p style="color: #cbd5e1;">Docker Compose ile 3 komutla başlatın. API, Veritabanı ve Cache otomatik olarak ayarlanır.</p>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Top Papers Tab -->
-        <div id="top-papers-tab" class="tab-content">
-            <div class="card card-animated">
-                <div class="card-header">
-                    <div class="card-icon">🏆</div>
+        <!-- Stats Section -->
+        <div style="background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.05) 100%); padding: 60px 0; border-top: 1px solid var(--border-color); border-bottom: 1px solid var(--border-color); margin-top: 40px;">
+            <div class="container">
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 30px; text-align: center;">
                     <div>
-                        <h2>En Çok Atıf Alan Makaleler</h2>
-                        <p class="card-description">Konu bazında en çok atıf alan akademik makaleleri keşfedin</p>
+                        <div style="font-size: 3em; font-weight: 900; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; margin-bottom: 10px;">1M+</div>
+                        <div style="color: var(--text-secondary); font-size: 1.1em;">Sentetik Atıf Kaydı</div>
                     </div>
-                </div>
-                <div class="card-body">
-                <div class="form-group">
-                    <label for="topic-select">Konu:</label>
-                    <select id="topic-select" class="input" style="cursor: pointer;">
-                        <option value="AI" selected>AI</option>
-                        <option value="Machine Learning">Machine Learning</option>
-                        <option value="Deep Learning">Deep Learning</option>
-                        <option value="NLP">NLP</option>
-                        <option value="Computer Vision">Computer Vision</option>
-                        <option value="Robotics">Robotics</option>
-                        <option value="Data Science">Data Science</option>
-                        <option value="Statistics">Statistics</option>
-                        <option value="Mathematics">Mathematics</option>
-                        <option value="Physics">Physics</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="limit-input">Limit:</label>
-                    <input type="number" id="limit-input" class="input" value="50" min="1" max="100">
-                </div>
-                <div class="button-group">
-                    <button class="btn btn-warning" onclick="getTopPapersFromDB()">
-                        🔄 Sorgula (Veritabanından - Cache Yok)
-                    </button>
-                    <button class="btn btn-primary" onclick="getTopPapers()">
-                        ⚡ Sorgula (Cache'den - Hızlı)
-                    </button>
-                </div>
-                <div class="info-box">
-                    <p><strong>💡 Açıklama:</strong></p>
-                    <ul>
-                        <li><strong>Veritabanından:</strong> Cache'i atlayıp direkt PostgreSQL'den sorgular (yavaş, ~500-2000ms)</li>
-                        <li><strong>Cache'den:</strong> Redis cache'den sorgular (hızlı, ~10-50ms) - İlk sorgudan sonra 60 saniye geçerli</li>
-                    </ul>
-                </div>
-                <div id="cache-indicator" class="cache-indicator"></div>
-                <div id="top-papers-result" class="results"></div>
+                    <div>
+                        <div style="font-size: 3em; font-weight: 900; background: linear-gradient(135deg, #10b981 0%, #059669 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; margin-bottom: 10px;">10K+</div>
+                        <div style="color: var(--text-secondary); font-size: 1.1em;">Akademik Makale</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 3em; font-weight: 900; background: linear-gradient(135deg, #f59e0b 0%, #f97316 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; margin-bottom: 10px;">10x</div>
+                        <div style="color: var(--text-secondary); font-size: 1.1em;">Cache Hızlandırma</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 3em; font-weight: 900; background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; margin-bottom: 10px;">60s</div>
+                        <div style="color: var(--text-secondary); font-size: 1.1em;">Cache TTL</div>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <!-- Stats Tab -->
-        <div id="stats-tab" class="tab-content">
-            <div class="card card-animated">
-                <div class="card-header">
-                    <div class="card-icon">📈</div>
-                    <div>
-                        <h2>İstatistikler ve Analiz</h2>
-                        <p class="card-description">Sistem genelinde detaylı istatistikler ve görselleştirmeler</p>
-                    </div>
+        <!-- Hero Section -->
+        <div class="hero-section">
+            <div class="hero-content">
+                <div class="hero-badge">
+                    <span class="badge-icon">🚀</span>
+                    <span>Production Ready</span>
                 </div>
-                <div class="card-body">
-                    <button class="btn btn-secondary" onclick="loadStats()">
-                        <span class="btn-icon">🔄</span>
-                        <span>İstatistikleri Yenile</span>
-                    </button>
-                    <div id="stats-result" class="results"></div>
+                <h1 class="hero-title">
+                    CiteGraph
+                    <span class="gradient-text">Akademik Atıf Analiz Sistemi</span>
+                </h1>
+                <p class="hero-subtitle">
+                    Google Scholar benzeri modern bir platform. Akademik makalelerin atıf ilişkilerini analiz edin, 
+                    en etkili araştırmaları keşfedin ve citation network'lerini görselleştirin.
+                </p>
+                <div class="hero-buttons">
+                    <a href="#dashboard" onclick="showSection('dashboard')" class="btn btn-primary btn-large">
+                        <span class="btn-icon">📊</span>
+                        <span>Dashboard'a Git</span>
+                    </a>
+                    <a href="/docs" target="_blank" class="btn btn-secondary btn-large">
+                        <span class="btn-icon">📖</span>
+                        <span>API Dokümantasyonu</span>
+                    </a>
+                </div>
+                <div class="hero-stats">
+                    <div class="hero-stat">
+                        <div class="stat-number">1M+</div>
+                        <div class="stat-label">Sentetik Atıf Kaydı</div>
+                    </div>
+                    <div class="hero-stat">
+                        <div class="stat-number">10K+</div>
+                        <div class="stat-label">Akademik Makale</div>
+                    </div>
+                    <div class="hero-stat">
+                        <div class="stat-number">60s</div>
+                        <div class="stat-label">Redis Cache TTL</div>
+                    </div>
+                    <div class="hero-stat">
+                        <div class="stat-number">10x</div>
+                        <div class="stat-label">Performans Artışı</div>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
+
+        <!-- Features Section -->
+        <div class="features-section">
+            <div class="container">
+                <div class="section-header">
+                    <h2 class="section-title">Özellikler</h2>
+                    <p class="section-description">CiteGraph'in güçlü özellikleri ile akademik araştırmalarınızı bir üst seviyeye taşıyın</p>
+                </div>
+                <div class="features-grid">
+                    <div class="feature-card">
+                        <div class="feature-icon">📊</div>
+                        <h3 class="feature-title">Sentetik Veri Üretimi</h3>
+                        <p class="feature-description">
+                            1 milyon+ akademik atıf kaydı oluşturun. Batch insert teknolojisi ile yüksek performanslı veri üretimi.
+                        </p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">⚡</div>
+                        <h3 class="feature-title">Redis Cache Sistemi</h3>
+                        <p class="feature-description">
+                            Ağır sorguları Redis cache ile hızlandırın. Cache HIT durumunda 10x daha hızlı yanıt süreleri.
+                        </p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-title">📈 İstatistik ve Analiz</div>
+                        <h3 class="feature-title">Görselleştirme</h3>
+                        <p class="feature-description">
+                            Konu bazlı dağılım, atıf trendleri ve büyüme oranları. Chart.js ile interaktif grafikler.
+                        </p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">🔍</div>
+                        <h3 class="feature-title">Akıllı Arama</h3>
+                        <p class="feature-description">
+                            Konu bazında en çok atıf alan makaleleri keşfedin. Citation count ve growth rate analizi.
+                        </p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">🎨</div>
+                        <h3 class="feature-title">Modern Arayüz</h3>
+                        <p class="feature-description">
+                            Responsive tasarım, mobil uyumlu, modern animasyonlar ve kullanıcı dostu deneyim.
+                        </p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">🔧</div>
+                        <h3 class="feature-title">REST API</h3>
+                        <p class="feature-description">
+                            FastAPI ile güçlü REST API. Otomatik dokümantasyon, type hints ve async desteği.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- How It Works Section -->
+        <div class="how-it-works-section">
+            <div class="container">
+                <div class="section-header">
+                    <h2 class="section-title">Nasıl Çalışır?</h2>
+                    <p class="section-description">CiteGraph'in çalışma prensibi ve cache sistemi</p>
+                </div>
+                <div class="workflow">
+                    <div class="workflow-step">
+                        <div class="step-number">1</div>
+                        <div class="step-content">
+                            <h3>Veri Oluştur</h3>
+                            <p>1 milyon+ sentetik atıf kaydı oluşturun. Sistem batch insert ile hızlı veri üretimi yapar.</p>
+                        </div>
+                    </div>
+                    <div class="workflow-arrow">→</div>
+                    <div class="workflow-step">
+                        <div class="step-number">2</div>
+                        <div class="step-content">
+                            <h3>PostgreSQL'de Sakla</h3>
+                            <p>Veriler PostgreSQL veritabanında güvenli şekilde saklanır. İlişkisel yapı ile optimize edilmiş sorgular.</p>
+                        </div>
+                    </div>
+                    <div class="workflow-arrow">→</div>
+                    <div class="workflow-step">
+                        <div class="step-number">3</div>
+                        <div class="step-content">
+                            <h3>Cache'le</h3>
+                            <p>İlk sorgu PostgreSQL'den gelir (Cache MISS). Sonuç Redis'e kaydedilir (60 saniye TTL).</p>
+                        </div>
+                    </div>
+                    <div class="workflow-arrow">→</div>
+                    <div class="workflow-step">
+                        <div class="step-number">4</div>
+                        <div class="step-content">
+                            <h3>Hızlı Yanıt</h3>
+                            <p>Sonraki sorgular Redis cache'den gelir (Cache HIT). 10x daha hızlı yanıt süreleri.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Cache Performance Section -->
+        <div class="cache-section">
+            <div class="container">
+                <div class="section-header">
+                    <h2 class="section-title">Cache Performans Analizi</h2>
+                    <p class="section-description">Redis cache'in performans farkını görsel olarak keşfedin</p>
+                </div>
+                <div class="cache-comparison">
+                    <div class="cache-card miss">
+                        <div class="cache-header-compare">
+                            <span class="cache-badge-compare miss">CACHE MISS</span>
+                            <span class="cache-source">PostgreSQL</span>
+                        </div>
+                        <div class="cache-performance">
+                            <div class="performance-bar slow">
+                                <div class="performance-fill" style="width: 100%"></div>
+                            </div>
+                            <div class="performance-time">~500-2000ms</div>
+                        </div>
+                        <p class="cache-description">
+                            İlk sorgu veritabanından gelir. Ağır JOIN ve GROUP BY işlemleri yapılır.
+                        </p>
+                    </div>
+                    <div class="cache-vs">VS</div>
+                    <div class="cache-card hit">
+                        <div class="cache-header-compare">
+                            <span class="cache-badge-compare hit">CACHE HIT</span>
+                            <span class="cache-source">Redis</span>
+                        </div>
+                        <div class="cache-performance">
+                            <div class="performance-bar fast">
+                                <div class="performance-fill" style="width: 10%"></div>
+                            </div>
+                            <div class="performance-time">~10-50ms</div>
+                        </div>
+                        <p class="cache-description">
+                            İkinci sorgu Redis cache'den gelir. JSON formatında hazır veri, anında yanıt.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- CTA Section -->
+        <div class="cta-section">
+            <div class="container">
+                <div class="cta-content">
+                    <h2 class="cta-title">Hemen Başlayın</h2>
+                    <p class="cta-description">
+                        CiteGraph ile akademik atıf analizlerinizi bir üst seviyeye taşıyın
+                    </p>
+                    <a href="#dashboard" onclick="showSection('dashboard')" class="btn btn-primary btn-large">
+                        <span class="btn-icon">🚀</span>
+                        <span>Dashboard'ı Aç</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Dashboard Section -->
+    <section id="dashboard-section" class="section">
+        <div class="container">
+            <nav class="tabs">
+                <button class="tab-btn active" onclick="showTab('generate', this)">Veri Oluştur</button>
+                <button class="tab-btn" onclick="showTab('top-papers', this)">En Çok Atıf Alan Makaleler</button>
+                <button class="tab-btn" onclick="showTab('stats', this)">İstatistikler</button>
+            </nav>
+
+            <!-- Generate Data Tab -->
+            <div id="generate-tab" class="tab-content active">
+                <div class="card card-animated">
+                    <div class="card-header">
+                        <div class="card-icon">📊</div>
+                        <div>
+                            <h2>Sentetik Veri Oluştur</h2>
+                            <p class="card-description">1 milyon+ akademik atıf kaydı oluşturun. Bu işlem 5-10 dakika sürebilir.</p>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <button id="generate-btn" class="btn btn-primary btn-large" onclick="generateData()">
+                            <span class="btn-icon">🚀</span>
+                            <span>Veri Oluştur</span>
+                        </button>
+                        <button id="clear-btn" class="btn btn-danger btn-large" onclick="clearDatabase()" style="margin-top: 15px; width: 100%;">
+                            <span class="btn-icon">🗑️</span>
+                            <span>Veritabanını Temizle</span>
+                        </button>
+                        <div class="info-box" style="margin-top: 20px; background: rgba(239, 68, 68, 0.1); border-left: 4px solid #ef4444; padding: 15px; border-radius: 8px;">
+                            <p style="margin: 0; color: #fee2e2;"><strong>⚠️ Dikkat:</strong> "Veritabanını Temizle" butonu tüm makale ve atıf verilerini siler. Bu işlem geri alınamaz!</p>
+                        </div>
+                        <div id="generate-status" class="status"></div>
+                        <div id="generate-progress" class="progress-container" style="display: none;">
+                            <div class="progress-bar">
+                                <div class="progress-fill" id="progress-fill"></div>
+                            </div>
+                            <div class="progress-text" id="progress-text">0%</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Top Papers Tab -->
+            <div id="top-papers-tab" class="tab-content">
+                <div class="card card-animated">
+                    <div class="card-header">
+                        <div class="card-icon">🏆</div>
+                        <div>
+                            <h2>En Çok Atıf Alan Makaleler</h2>
+                            <p class="card-description">Konu bazında en çok atıf alan akademik makaleleri keşfedin</p>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="form-group">
+                            <label for="topic-select">Konu:</label>
+                            <select id="topic-select" class="input" style="cursor: pointer;">
+                                <option value="AI" selected>AI</option>
+                                <option value="Machine Learning">Machine Learning</option>
+                                <option value="Deep Learning">Deep Learning</option>
+                                <option value="NLP">NLP</option>
+                                <option value="Computer Vision">Computer Vision</option>
+                                <option value="Robotics">Robotics</option>
+                                <option value="Data Science">Data Science</option>
+                                <option value="Statistics">Statistics</option>
+                                <option value="Mathematics">Mathematics</option>
+                                <option value="Physics">Physics</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="limit-input">Limit:</label>
+                            <input type="number" id="limit-input" class="input" value="50" min="1" max="100">
+                        </div>
+                        <div class="button-group">
+                            <button class="btn btn-warning" onclick="getTopPapersFromDB()">
+                                🔄 Sorgula (Veritabanından - Cache Yok)
+                            </button>
+                            <button class="btn btn-primary" onclick="getTopPapers()">
+                                ⚡ Sorgula (Cache'den - Hızlı)
+                            </button>
+                        </div>
+                        <div class="info-box">
+                            <p><strong>💡 Açıklama:</strong></p>
+                            <ul>
+                                <li><strong>Veritabanından:</strong> Cache'i atlayıp direkt PostgreSQL'den sorgular (yavaş, ~500-2000ms)</li>
+                                <li><strong>Cache'den:</strong> Redis cache'den sorgular (hızlı, ~10-50ms) - İlk sorgudan sonra 60 saniye geçerli</li>
+                            </ul>
+                        </div>
+                        <div id="cache-indicator" class="cache-indicator"></div>
+                        <div id="top-papers-result" class="results"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Stats Tab -->
+            <div id="stats-tab" class="tab-content">
+                <div class="card card-animated">
+                    <div class="card-header">
+                        <div class="card-icon">📈</div>
+                        <div>
+                            <h2>İstatistikler ve Analiz</h2>
+                            <p class="card-description">Sistem genelinde detaylı istatistikler ve görselleştirmeler</p>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <button class="btn btn-secondary" onclick="loadStats()">
+                            <span class="btn-icon">🔄</span>
+                            <span>İstatistikleri Yenile</span>
+                        </button>
+                        <div id="stats-result" class="results"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
 
     <footer>
         <div class="footer-content">
@@ -149,4 +464,3 @@
     <script src="/static/script.js"></script>
 </body>
 </html>
-

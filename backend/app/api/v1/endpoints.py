@@ -162,6 +162,35 @@ def get_top_papers(
     return response
 
 
+@router.delete("/clear")
+def clear_database(db: Session = Depends(get_db)):
+    """
+    Clear all papers and citations from the database.
+    Also clears Redis cache.
+    """
+    logger.warning("Clearing all database data...")
+    
+    # Clear database
+    result = crud.clear_all_data(db)
+    
+    # Clear Redis cache
+    try:
+        # Get all cache keys matching our pattern
+        cache_keys = redis_client.keys("top_papers:*")
+        if cache_keys:
+            redis_client.delete(*cache_keys)
+            logger.info(f"Cleared {len(cache_keys)} cache keys from Redis")
+    except Exception as e:
+        logger.warning(f"Error clearing Redis cache: {e}")
+    
+    logger.info(f"Database cleared: {result['papers_deleted']} papers, {result['citations_deleted']} citations")
+    
+    return {
+        "message": "Database cleared successfully",
+        **result
+    }
+
+
 @router.get("/health")
 def health_check():
     """

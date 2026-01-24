@@ -14,6 +14,36 @@ function showToast(message, type = 'info') {
     }, 3000);
 }
 
+// Section switching (Home/Dashboard)
+function showSection(sectionName) {
+    // Hide all sections
+    document.querySelectorAll('.section').forEach(section => {
+        section.classList.remove('active');
+    });
+    
+    // Show selected section
+    const targetSection = document.getElementById(`${sectionName}-section`);
+    if (targetSection) {
+        targetSection.classList.add('active');
+    }
+    
+    // Update nav links
+    document.querySelectorAll('.nav-link').forEach(link => {
+        link.classList.remove('active');
+        if (link.getAttribute('onclick')?.includes(sectionName)) {
+            link.classList.add('active');
+        }
+    });
+    
+    // Scroll to top
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    
+    // If dashboard, load stats
+    if (sectionName === 'dashboard') {
+        loadStats();
+    }
+}
+
 // Tab switching
 function showTab(tabName, clickedBtn) {
     // Hide all tabs
@@ -36,6 +66,56 @@ function showTab(tabName, clickedBtn) {
                 btn.classList.add('active');
             }
         });
+    }
+}
+
+// Clear database
+async function clearDatabase() {
+    if (!confirm('⚠️ Tüm veritabanı verileri silinecek! Bu işlem geri alınamaz.\n\nDevam etmek istiyor musunuz?')) {
+        return;
+    }
+    
+    const btn = document.getElementById('clear-btn');
+    const status = document.getElementById('generate-status');
+    
+    btn.disabled = true;
+    btn.textContent = 'Temizleniyor...';
+    status.className = 'status info';
+    status.textContent = 'Veritabanı temizleniyor...';
+    status.style.display = 'block';
+    
+    try {
+        const response = await fetch(`${API_BASE}/clear`, {
+            method: 'DELETE'
+        });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        
+        status.className = 'status success';
+        status.innerHTML = `
+            ✅ <strong>Başarılı!</strong><br>
+            ${data.papers_deleted.toLocaleString()} makale ve ${data.citations_deleted.toLocaleString()} atıf silindi.<br>
+            Redis cache de temizlendi.
+        `;
+        
+        showToast('Veritabanı başarıyla temizlendi', 'success');
+        
+        // Refresh stats if on dashboard
+        if (document.getElementById('stats-tab').classList.contains('active')) {
+            loadStats();
+        }
+        
+    } catch (error) {
+        status.className = 'status error';
+        status.textContent = `❌ Hata: ${error.message}`;
+        showToast('Veritabanı temizlenirken hata oluştu', 'error');
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<span class="btn-icon">🗑️</span><span>Veritabanını Temizle</span>';
     }
 }
 
@@ -261,21 +341,24 @@ async function loadStats() {
         // Topic distribution with chart
         if (data.topic_distribution && data.topic_distribution.length > 0) {
             html += `
-                <div class="card" style="margin-top: 24px;">
-                    <h3 style="margin-bottom: 20px;">📚 Konu Dağılımı</h3>
-                    <div style="margin-bottom: 20px;">
-                        <canvas id="topicChart" height="80"></canvas>
+                <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 24px; margin-top: 24px; align-items: start;">
+                    <div class="card" style="margin-top: 0;">
+                        <h3 style="margin-bottom: 15px;">📚 Konu Dağılımı</h3>
+                        <div style="height: 250px; display: flex; align-items: center;">
+                            <canvas id="topicChart"></canvas>
+                        </div>
                     </div>
-                    <div class="table-container">
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Konu</th>
-                                    <th>Makale Sayısı</th>
-                                    <th>Yüzde</th>
-                                </tr>
-                            </thead>
-                            <tbody>
+                    <div class="card" style="margin-top: 0;">
+                        <div class="table-container">
+                            <table style="margin: 0;">
+                                <thead>
+                                    <tr>
+                                        <th>Konu</th>
+                                        <th>Makale Sayısı</th>
+                                        <th>Yüzde</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
             `;
             
             const total = data.topic_distribution.reduce((sum, t) => sum + t.count, 0);
@@ -291,8 +374,9 @@ async function loadStats() {
             });
             
             html += `
-                            </tbody>
-                        </table>
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             `;
@@ -383,9 +467,43 @@ async function loadStats() {
     }
 }
 
-// Display top papers in table
+// Display top papers in table with charts
 function displayTopPapers(data, resultDiv) {
+    if (data.length === 0) {
+        resultDiv.innerHTML = '<p class="status info">Bu konu için henüz veri yok.</p>';
+        return;
+    }
+
+    // Prepare data for charts
+    const top10 = data.slice(0, 10);
+    const labels = top10.map((p, i) => `#${i + 1}`);
+    const citationCounts = top10.map(p => p.citation_count);
+    const growthRates = top10.map(p => p.citation_growth_rate);
+    const years = data.map(p => p.published_year);
+    
+    // Year distribution
+    const yearCounts = {};
+    years.forEach(year => {
+        yearCounts[year] = (yearCounts[year] || 0) + 1;
+    });
+    const yearLabels = Object.keys(yearCounts).sort((a, b) => a - b);
+    const yearValues = yearLabels.map(y => yearCounts[y]);
+
     let html = `
+        <div class="charts-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 24px; margin-bottom: 30px;">
+            <div class="chart-card">
+                <h4 style="margin-bottom: 15px; color: #667eea; font-weight: 700;">📊 Top 10 Makale - Atıf Sayıları</h4>
+                <canvas id="citationChart" height="200"></canvas>
+            </div>
+            <div class="chart-card">
+                <h4 style="margin-bottom: 15px; color: #667eea; font-weight: 700;">📈 Top 10 Makale - Büyüme Oranları</h4>
+                <canvas id="growthChart" height="200"></canvas>
+            </div>
+        </div>
+        <div class="chart-card" style="margin-bottom: 30px;">
+            <h4 style="margin-bottom: 15px; color: #667eea; font-weight: 700;">📅 Yıl Bazlı Dağılım</h4>
+            <canvas id="yearChart" height="100"></canvas>
+        </div>
         <div class="table-container">
             <table>
                 <thead>
@@ -396,20 +514,44 @@ function displayTopPapers(data, resultDiv) {
                         <th>Yıl</th>
                         <th>Atıf Sayısı</th>
                         <th>Büyüme Oranı (%)</th>
+                        <th>Durum</th>
                     </tr>
                 </thead>
                 <tbody>
     `;
 
     data.forEach((paper, index) => {
+        // Determine growth status
+        let growthBadge = '';
+        let growthClass = '';
+        if (paper.citation_growth_rate === 0) {
+            growthBadge = '📉 Durgun';
+            growthClass = 'badge-secondary';
+        } else if (paper.citation_growth_rate < 0.5) {
+            growthBadge = '📊 Düşük';
+            growthClass = 'badge-warning';
+        } else if (paper.citation_growth_rate < 1.0) {
+            growthBadge = '📈 Orta';
+            growthClass = 'badge-info';
+        } else {
+            growthBadge = '🚀 Yüksek';
+            growthClass = 'badge-success';
+        }
+
         html += `
             <tr>
                 <td>${index + 1}</td>
-                <td>${paper.title}</td>
+                <td><strong>${paper.title}</strong></td>
                 <td><span class="badge badge-primary">${paper.topic}</span></td>
                 <td>${paper.published_year}</td>
-                <td><strong>${paper.citation_count.toLocaleString()}</strong></td>
-                <td><span class="badge badge-success">${paper.citation_growth_rate}%</span></td>
+                <td><strong style="color: #667eea; font-size: 1.1em;">${paper.citation_count.toLocaleString()}</strong></td>
+                <td>
+                    <span class="badge ${paper.citation_growth_rate === 0 ? 'badge-secondary' : 'badge-success'}">
+                        ${paper.citation_growth_rate}%
+                    </span>
+                    ${paper.citation_growth_rate === 0 ? '<br><small style="color: #999;">Son 30 günde atıf yok</small>' : ''}
+                </td>
+                <td><span class="badge ${growthClass}">${growthBadge}</span></td>
             </tr>
         `;
     });
@@ -418,12 +560,323 @@ function displayTopPapers(data, resultDiv) {
                 </tbody>
             </table>
         </div>
-        <p style="margin-top: 15px; color: #666; font-size: 0.9em;">
-            Toplam ${data.length} makale gösteriliyor
-        </p>
+        <div style="margin-top: 20px; padding: 15px; background: rgba(102, 126, 234, 0.1); border-radius: 8px; border: 1px solid #667eea;">
+            <p style="margin: 0; color: #cbd5e1; font-size: 0.9em;">
+                <strong>💡 Açıklama:</strong> Büyüme oranı, son 30 gün içindeki atıf sayısının toplam atıf sayısına oranıdır. 
+                0% değeri, son 30 günde yeni atıf alınmadığını gösterir.
+            </p>
+            <p style="margin-top: 10px; margin-bottom: 0; color: #cbd5e1; font-size: 0.9em;">
+                <strong>Toplam:</strong> ${data.length} makale gösteriliyor
+            </p>
+        </div>
     `;
 
     resultDiv.innerHTML = html;
+
+    // Create charts
+    setTimeout(() => {
+        createCitationChart(labels, citationCounts);
+        createGrowthChart(labels, growthRates);
+        createYearChart(yearLabels, yearValues);
+    }, 100);
+}
+
+// Create citation count chart
+function createCitationChart(labels, data) {
+    const ctx = document.getElementById('citationChart');
+    if (!ctx) return;
+    
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Atıf Sayısı',
+                data: data,
+                backgroundColor: 'rgba(102, 126, 234, 0.8)',
+                borderColor: '#667eea',
+                borderWidth: 2,
+                borderRadius: 8
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            aspectRatio: window.innerWidth < 768 ? 1.5 : 2,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return value.toLocaleString();
+                        },
+                        font: {
+                            size: window.innerWidth < 480 ? 10 : 12
+                        }
+                    }
+                },
+                x: {
+                    ticks: {
+                        font: {
+                            size: window.innerWidth < 480 ? 10 : 12
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+// Create growth rate chart
+function createGrowthChart(labels, data) {
+    const ctx = document.getElementById('growthChart');
+    if (!ctx) return;
+    
+    const isMobile = window.innerWidth < 768;
+    
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Büyüme Oranı (%)',
+                data: data,
+                borderColor: '#10b981',
+                backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                borderWidth: 3,
+                fill: true,
+                tension: 0.4,
+                pointRadius: isMobile ? 4 : 5,
+                pointBackgroundColor: '#10b981'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            aspectRatio: isMobile ? 1.5 : 2,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return value + '%';
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+// Create year distribution chart
+function createYearChart(labels, data) {
+    const ctx = document.getElementById('yearChart');
+    if (!ctx) return;
+    
+    const isMobile = window.innerWidth < 768;
+    
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Makale Sayısı',
+                data: data,
+                borderColor: '#764ba2',
+                backgroundColor: 'rgba(118, 75, 162, 0.1)',
+                borderWidth: 3,
+                fill: true,
+                tension: 0.4,
+                pointRadius: isMobile ? 3 : 4,
+                pointBackgroundColor: '#764ba2'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            aspectRatio: isMobile ? 2 : 3,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        stepSize: 1
+                    }
+                }
+            }
+        }
+    });
+}
+
+// Create citation count chart (for top papers)
+function createCitationChart(labels, data) {
+    const ctx = document.getElementById('citationChart');
+    if (!ctx) return;
+    
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Atıf Sayısı',
+                data: data,
+                backgroundColor: 'rgba(102, 126, 234, 0.8)',
+                borderColor: '#667eea',
+                borderWidth: 2,
+                borderRadius: 8
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            aspectRatio: window.innerWidth < 768 ? 1.5 : 2,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return value.toLocaleString();
+                        },
+                        font: {
+                            size: window.innerWidth < 480 ? 10 : 12
+                        }
+                    }
+                },
+                x: {
+                    ticks: {
+                        font: {
+                            size: window.innerWidth < 480 ? 10 : 12
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+// Create growth rate chart (for top papers)
+function createGrowthChart(labels, data) {
+    const ctx = document.getElementById('growthChart');
+    if (!ctx) return;
+    
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Büyüme Oranı (%)',
+                data: data,
+                borderColor: '#10b981',
+                backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                borderWidth: 3,
+                fill: true,
+                tension: 0.4,
+                pointRadius: 5,
+                pointBackgroundColor: '#10b981'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            aspectRatio: isMobile ? 1.5 : 2,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return value + '%';
+                        },
+                        font: {
+                            size: window.innerWidth < 480 ? 10 : 12
+                        }
+                    }
+                },
+                x: {
+                    ticks: {
+                        font: {
+                            size: window.innerWidth < 480 ? 10 : 12
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+// Create year distribution chart (for top papers)
+function createYearChart(labels, data) {
+    const ctx = document.getElementById('yearChart');
+    if (!ctx) return;
+    
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Makale Sayısı',
+                data: data,
+                borderColor: '#764ba2',
+                backgroundColor: 'rgba(118, 75, 162, 0.1)',
+                borderWidth: 3,
+                fill: true,
+                tension: 0.4,
+                pointRadius: 4,
+                pointBackgroundColor: '#764ba2'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            aspectRatio: isMobile ? 2 : 3,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        stepSize: 1,
+                        font: {
+                            size: window.innerWidth < 480 ? 10 : 12
+                        }
+                    }
+                },
+                x: {
+                    ticks: {
+                        font: {
+                            size: window.innerWidth < 480 ? 10 : 12
+                        }
+                    }
+                }
+            }
+        }
+    });
 }
 
 // Create topic distribution chart
@@ -484,7 +937,8 @@ function createCitationsChart(citationsData) {
         },
         options: {
             responsive: true,
-            maintainAspectRatio: true,
+            maintainAspectRatio: false,
+            aspectRatio: window.innerWidth < 768 ? 1.5 : 2,
             plugins: {
                 legend: {
                     display: false
@@ -496,6 +950,16 @@ function createCitationsChart(citationsData) {
                     ticks: {
                         callback: function(value) {
                             return value.toLocaleString();
+                        },
+                        font: {
+                            size: window.innerWidth < 480 ? 10 : 12
+                        }
+                    }
+                },
+                x: {
+                    ticks: {
+                        font: {
+                            size: window.innerWidth < 480 ? 10 : 12
                         }
                     }
                 }
@@ -504,8 +968,12 @@ function createCitationsChart(citationsData) {
     });
 }
 
-// Auto-load stats on page load
+// Auto-load stats on page load (only if dashboard is active)
 window.addEventListener('load', () => {
-    loadStats();
+    // Check if we're on dashboard section
+    const dashboardSection = document.getElementById('dashboard-section');
+    if (dashboardSection && dashboardSection.classList.contains('active')) {
+        loadStats();
+    }
 });
 

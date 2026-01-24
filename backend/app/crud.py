@@ -129,6 +129,27 @@ def get_citation_count(db: Session) -> int:
     return db.query(models.Citation).count()
 
 
+def clear_all_data(db: Session) -> dict:
+    """
+    Delete all papers and citations from the database.
+    Returns count of deleted records.
+    """
+    # Delete citations first (due to foreign key constraints)
+    citation_count = db.query(models.Citation).count()
+    db.query(models.Citation).delete()
+    
+    # Delete papers
+    paper_count = db.query(models.Paper).count()
+    db.query(models.Paper).delete()
+    
+    db.commit()
+    
+    return {
+        "papers_deleted": paper_count,
+        "citations_deleted": citation_count
+    }
+
+
 def get_statistics(db: Session) -> dict:
     """Get comprehensive statistics about papers and citations."""
     from sqlalchemy import func, extract
